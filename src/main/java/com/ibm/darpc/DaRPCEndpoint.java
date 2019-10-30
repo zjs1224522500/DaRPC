@@ -134,20 +134,42 @@ public abstract class DaRPCEndpoint<R extends DaRPCMessage, T extends DaRPCMessa
 	}
 	
 	protected boolean sendMessage(DaRPCMessage message, int ticket) throws IOException {
+
+		// Get the SVC object from blocking queue.
 		SVCPostSend postSend = freePostSend.poll();
-		if (postSend != null){
+		if (null != postSend) {
+
+			// Get the work-request id of first work request in this SVC object.
 			int index = (int) postSend.getWrMod(0).getWr_id();
+
+			// Write the ticket to send buffer
 			sendBufs[index].putInt(0, ticket);
+
+			// Move the pointer
 			sendBufs[index].position(4);
+
+			// Calculate the total length of byte buffer.
 			int written = 4 + message.write(sendBufs[index]);
+
+			// Set byte length for scatter/gather element of this work request.
 			postSend.getWrMod(0).getSgeMod(0).setLength(written);
+
+			// Set the flag for the work request with value IbvSendWR.IBV_SEND_SIGNALED | IbvSendWR.IBV_SEND_INLINE
 			postSend.getWrMod(0).setSend_flags(IbvSendWR.IBV_SEND_SIGNALED);
 			if (written <= maxinline) {
 				postSend.getWrMod(0).setSend_flags(postSend.getWrMod(0).getSend_flags() | IbvSendWR.IBV_SEND_INLINE);
-			} 
+			}
+
+			// Build the hash map with K-ticket V-SVC object
 			pendingPostSend.put(ticket, postSend);
+
+			// Execute the SVC object
 			postSend.execute();
+
+			// Calculate the number of sent message.
 			messagesSent.incrementAndGet();
+
+			// Return the result.
 			return true;
 		} else {
 			return false;
@@ -196,17 +218,23 @@ public abstract class DaRPCEndpoint<R extends DaRPCMessage, T extends DaRPCMessa
 		ArrayList<IbvSendWR> sendWRs = new ArrayList<IbvSendWR>(1);
 		LinkedList<IbvSge> sgeList = new LinkedList<IbvSge>();
 
+		// Build scatter/gather element. Describes a local buffer.
 		IbvSge sge = new IbvSge();
+		// Set the start address and length for every slice
 		sge.setAddr(MemoryUtils.getAddress(sendBufs[wrid]));
 		sge.setLength(rawBufferSize);
+		// Set the RDMA key for this task
 		sge.setLkey(dataMr.getLkey());
 		sgeList.add(sge);
 
+		// Construct a send work request.
 		IbvSendWR sendWR = new IbvSendWR();
 		sendWR.setSg_list(sgeList);
 		sendWR.setWr_id(wrid);
 		sendWRs.add(sendWR);
+		// Set the send flags with value IbvSendWR.IBV_SEND_SIGNALED
 		sendWR.setSend_flags(IbvSendWR.IBV_SEND_SIGNALED);
+		// Set the opcode of this work request with IBV_WR_SEND.
 		sendWR.setOpcode(IbvSendWR.IbvWrOcode.IBV_WR_SEND.ordinal());
 
 		return postSend(sendWRs);
@@ -216,17 +244,25 @@ public abstract class DaRPCEndpoint<R extends DaRPCMessage, T extends DaRPCMessa
 		ArrayList<IbvRecvWR> recvWRs = new ArrayList<IbvRecvWR>(1);
 		LinkedList<IbvSge> sgeList = new LinkedList<IbvSge>();
 
+		// Build scatter/gather element. Describes a local buffer.
 		IbvSge sge = new IbvSge();
+
+		// Set the start address and length for every slice
 		sge.setAddr(MemoryUtils.getAddress(recvBufs[wrid]));
 		sge.setLength(rawBufferSize);
+		// Set the RDMA key for this task
 		sge.setLkey(dataMr.getLkey());
 		sgeList.add(sge);
 
+		// Construct a receive work request.
 		IbvRecvWR recvWR = new IbvRecvWR();
+		// Set the work request identifier
 		recvWR.setWr_id(wrid);
+		// Sets the scatter/gather elements of this work request. Each scatter/gather element refers to one single buffer.
 		recvWR.setSg_list(sgeList);
 		recvWRs.add(recvWR);
 
+		// Post a receive operation on this endpoint.
 		return postRecv(recvWRs);
 	}
 }

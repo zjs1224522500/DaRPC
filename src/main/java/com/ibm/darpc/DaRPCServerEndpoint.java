@@ -47,6 +47,10 @@ public class DaRPCServerEndpoint<R extends DaRPCMessage, T extends DaRPCMessage>
 		this.lazyEvents = new ArrayBlockingQueue<DaRPCServerEvent<R,T>>(group.recvQueueSize());
 	}
 
+	/**
+	 * Init the event pool with request and response buffer created by group.
+	 * @throws IOException
+	 */
 	public void init() throws IOException {
 		super.init();
 		for(int i = 0; i < group.recvQueueSize(); i++){
@@ -55,24 +59,41 @@ public class DaRPCServerEndpoint<R extends DaRPCMessage, T extends DaRPCMessage>
 			
 		}
 	}
-	
+
+	/**
+	 * Execute the specific SVC and send response.
+	 * @param event
+	 * @throws IOException
+	 */
 	void sendResponse(DaRPCServerEvent<R,T> event) throws IOException {
 		if (sendMessage(event.getSendMessage(), event.getTicket())){
 			eventPool.add(event);
 		} else {
 			lazyEvents.add(event);
 		}
-	}	
-	
+	}
+
+	/**
+	 * Dispatch completed queue event.
+	 * @param cmEvent event in completed queue
+	 * @throws IOException
+	 */
 	public synchronized void dispatchCmEvent(RdmaCmEvent cmEvent) throws IOException {
 		super.dispatchCmEvent(cmEvent);
 		try {
+			// Get the event type of cmEvent.
 			int eventType = cmEvent.getEvent();
+
+			// Connect Event - Open; Disconnect Event - Close.
 			if (eventType == RdmaCmEvent.EventType.RDMA_CM_EVENT_ESTABLISHED.ordinal()) {
 				logger.info("new RPC connection, eid " + this.getEndpointId());
+
+				// Call rpc service open()
 				group.open(this);
 			} else if (eventType == RdmaCmEvent.EventType.RDMA_CM_EVENT_DISCONNECTED.ordinal()) {
 				logger.info("RPC disconnection, eid " + this.getEndpointId());
+
+				// Call rpc service close()
 				group.close(this);
 			} 
 		} catch (Exception e) {
@@ -85,13 +106,19 @@ public class DaRPCServerEndpoint<R extends DaRPCMessage, T extends DaRPCMessage>
 	}
 	
 	public void dispatchReceive(ByteBuffer recvBuffer, int ticket, int recvIndex) throws IOException {
+
+		// Get the event from queue.
 		DaRPCServerEvent<R,T> event = eventPool.poll();
 		if (event == null){
 			logger.info("no free events, must be overrunning server.. ");
 			throw new IOException("no free events, must be overrunning server.. ");
 		}
+
+		// Update the request with recvBuffer
 		event.getReceiveMessage().update(recvBuffer);
+		// Stamp this event with ticket number.
 		event.stamp(ticket);
+
 		postRecv(recvIndex);
 		group.processServerEvent(event);			
 	}
