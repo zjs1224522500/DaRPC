@@ -81,7 +81,11 @@ public abstract class DaRPCEndpoint<R extends DaRPCMessage, T extends DaRPCMessa
 		this.messagesReceived = new AtomicLong(0);
 		logger.info("RPC client endpoint, with payload buffer size = " + payloadSize + ", pipeline " + pipelineLength);
 	}
-	
+
+	/**
+	 * Register Memory and Allocate buffer region for send and receive.
+	 * @throws IOException
+	 */
 	public void init() throws IOException {
 		int sendBufferOffset = pipelineLength * rawBufferSize;
 
@@ -119,6 +123,11 @@ public abstract class DaRPCEndpoint<R extends DaRPCMessage, T extends DaRPCMessa
 		}
 	}
 
+    /**
+     * Deregister the memory
+     * @throws IOException
+     * @throws InterruptedException
+     */
 	@Override
 	public synchronized void close() throws IOException, InterruptedException {
 		super.close();
@@ -218,7 +227,7 @@ public abstract class DaRPCEndpoint<R extends DaRPCMessage, T extends DaRPCMessa
 		ArrayList<IbvSendWR> sendWRs = new ArrayList<IbvSendWR>(1);
 		LinkedList<IbvSge> sgeList = new LinkedList<IbvSge>();
 
-		// Build scatter/gather element. Describes a local buffer.
+		// Build scatter/gather element(Data Segment). Describes a local buffer.
 		IbvSge sge = new IbvSge();
 		// Set the start address and length for every slice
 		sge.setAddr(MemoryUtils.getAddress(sendBufs[wrid]));
@@ -237,6 +246,7 @@ public abstract class DaRPCEndpoint<R extends DaRPCMessage, T extends DaRPCMessa
 		// Set the opcode of this work request with IBV_WR_SEND.
 		sendWR.setOpcode(IbvSendWR.IbvWrOcode.IBV_WR_SEND.ordinal());
 
+        // post a list of work requests (WRs) to a send queue
 		return postSend(sendWRs);
 	}
 
@@ -244,7 +254,7 @@ public abstract class DaRPCEndpoint<R extends DaRPCMessage, T extends DaRPCMessa
 		ArrayList<IbvRecvWR> recvWRs = new ArrayList<IbvRecvWR>(1);
 		LinkedList<IbvSge> sgeList = new LinkedList<IbvSge>();
 
-		// Build scatter/gather element. Describes a local buffer.
+		// Build scatter/gather element(Data Segment). Describes a local buffer.
 		IbvSge sge = new IbvSge();
 
 		// Set the start address and length for every slice
@@ -263,6 +273,7 @@ public abstract class DaRPCEndpoint<R extends DaRPCMessage, T extends DaRPCMessa
 		recvWRs.add(recvWR);
 
 		// Post a receive operation on this endpoint.
+        // post a list of work requests (WRs) to a receive queue
 		return postRecv(recvWRs);
 	}
 }
