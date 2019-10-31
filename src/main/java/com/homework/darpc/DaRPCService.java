@@ -19,9 +19,12 @@
  *
  */
 
-package com.ibm.darpc;
+package com.homework.darpc;
 
-public interface DaRPCProtocol<R extends DaRPCMessage, T extends DaRPCMessage> {
-	public abstract R createRequest();
-	public abstract T createResponse();	
+import java.io.IOException;
+
+public interface DaRPCService <R extends DaRPCMessage, T extends DaRPCMessage> extends DaRPCProtocol<R,T> {
+	public void processServerEvent(DaRPCServerEvent<R,T> event) throws IOException;
+	public void open(DaRPCServerEndpoint<R,T> rpcClientEndpoint);
+	public void close(DaRPCServerEndpoint<R,T> rpcClientEndpoint);
 }

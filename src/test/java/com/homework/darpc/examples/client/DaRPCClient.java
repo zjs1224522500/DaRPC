@@ -19,7 +19,7 @@
  *
  */
 
-package com.ibm.darpc.examples.client;
+package com.homework.darpc.examples.client;
 
 import java.io.FileOutputStream;
 import java.net.InetSocketAddress;
@@ -28,6 +28,13 @@ import java.nio.channels.FileChannel;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import com.homework.darpc.DaRPCClientEndpoint;
+import com.homework.darpc.DaRPCClientGroup;
+import com.homework.darpc.DaRPCEndpoint;
+import com.homework.darpc.DaRPCFuture;
+import com.homework.darpc.examples.protocol.RdmaRpcProtocol;
+import com.homework.darpc.examples.protocol.RdmaRpcRequest;
+import com.homework.darpc.examples.protocol.RdmaRpcResponse;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -36,14 +43,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
-import com.ibm.darpc.DaRPCClientEndpoint;
-import com.ibm.darpc.DaRPCClientGroup;
-import com.ibm.darpc.DaRPCEndpoint;
-import com.ibm.darpc.DaRPCFuture;
-import com.ibm.darpc.DaRPCStream;
-import com.ibm.darpc.examples.protocol.RdmaRpcProtocol;
-import com.ibm.darpc.examples.protocol.RdmaRpcRequest;
-import com.ibm.darpc.examples.protocol.RdmaRpcResponse;
+import com.homework.darpc.DaRPCStream;
 import com.ibm.disni.util.*;
 
 public class DaRPCClient {
@@ -86,14 +86,19 @@ public class DaRPCClient {
 		@Override
 		public void run() {
 			try {
+				// Create direct cq access rpc stream
 				DaRPCStream<RdmaRpcRequest, RdmaRpcResponse> stream = clientEp.createStream();
 				RdmaRpcRequest request = new RdmaRpcRequest();
+
+				// Judge if enable stream
 				boolean streamMode = (queryMode == STREAM_POLL) || (queryMode == STREAM_TAKE) || (queryMode == BATCH_STREAM_TAKE) || (queryMode == BATCH_STREAM_POLL);
 				int issued = 0;
 				int consumed = 0;
 				for (;  issued < loop; issued++) {
 					while(freeResponses.isEmpty()){
+						// poll from cq
 						DaRPCFuture<RdmaRpcRequest, RdmaRpcResponse> future = stream.poll();
+						// if the request has been processed, get the response.
 						if (future != null){
 							freeResponses.add(future.getReceiveMessage());						
 							consumed++;
@@ -102,10 +107,12 @@ public class DaRPCClient {
 					
 					request.setParam(issued);
 					RdmaRpcResponse response = freeResponses.poll();
+					// Send the request and execute
 					DaRPCFuture<RdmaRpcRequest, RdmaRpcResponse> future = stream.request(request, response, streamMode);
 					
 					switch (queryMode) {
 					case FUTURE_POLL:
+						// Block and wait. Without stream
 						while (!future.isDone()) {
 						}
 						consumed++;

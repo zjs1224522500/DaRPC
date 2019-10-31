@@ -19,16 +19,16 @@
  *
  */
 
-package com.ibm.darpc.examples.server;
+package com.homework.darpc.examples.server;
 
 import java.io.IOException;
 
-import com.ibm.darpc.DaRPCServerEndpoint;
-import com.ibm.darpc.DaRPCServerEvent;
-import com.ibm.darpc.DaRPCService;
-import com.ibm.darpc.examples.protocol.RdmaRpcProtocol;
-import com.ibm.darpc.examples.protocol.RdmaRpcRequest;
-import com.ibm.darpc.examples.protocol.RdmaRpcResponse;
+import com.homework.darpc.DaRPCServerEndpoint;
+import com.homework.darpc.DaRPCServerEvent;
+import com.homework.darpc.DaRPCService;
+import com.homework.darpc.examples.protocol.RdmaRpcProtocol;
+import com.homework.darpc.examples.protocol.RdmaRpcRequest;
+import com.homework.darpc.examples.protocol.RdmaRpcResponse;
 
 public class RdmaRpcService extends RdmaRpcProtocol implements DaRPCService<RdmaRpcRequest, RdmaRpcResponse> {
 	private int servicetimeout;

@@ -19,11 +19,11 @@
  *
  */
 
-package com.ibm.darpc.examples.protocol;
+package com.homework.darpc.examples.protocol;
 
 import java.nio.ByteBuffer;
 
-import com.ibm.darpc.DaRPCMessage;
+import com.homework.darpc.DaRPCMessage;
 
 public class RdmaRpcResponse implements DaRPCMessage {
 	public static int SERIALIZED_SIZE = 24;

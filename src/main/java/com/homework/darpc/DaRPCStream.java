@@ -19,7 +19,7 @@
  *
  */
 
-package com.ibm.darpc;
+package com.homework.darpc;
 
 import java.io.IOException;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -32,13 +32,27 @@ public class DaRPCStream<R extends DaRPCMessage,T extends DaRPCMessage> {
 	
 	private DaRPCClientEndpoint<R,T> endpoint;
 	private LinkedBlockingDeque<DaRPCFuture<R, T>> completedList;
-	
+
+	/**
+	 * Direct RPC stream
+	 * @param endpoint
+	 * @param streamId
+	 * @throws IOException
+	 */
 	DaRPCStream(DaRPCClientEndpoint<R,T> endpoint, int streamId) throws IOException{
 		logger.info("new direct rpc stream");
 		this.endpoint = endpoint;
 		this.completedList = new LinkedBlockingDeque<DaRPCFuture<R, T>>();
-	}	
-	
+	}
+
+	/**
+	 * Actual RPC call statement.
+	 * @param request req
+	 * @param response resp
+	 * @param streamLogged if stream enabled.
+	 * @return Future
+	 * @throws IOException
+	 */
 	public DaRPCFuture<R, T> request(R request, T response, boolean streamLogged) throws IOException {
 		DaRPCFuture<R, T> future = new DaRPCFuture<R, T>(this, endpoint, request, response, streamLogged);
 		endpoint.sendRequest(future);

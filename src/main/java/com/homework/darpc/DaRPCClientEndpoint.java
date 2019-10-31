@@ -19,7 +19,7 @@
  *
  */
 
-package com.ibm.darpc;
+package com.homework.darpc;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -54,7 +54,9 @@ public class DaRPCClientEndpoint<R extends DaRPCMessage, T extends DaRPCMessage>
 	@Override
 	public void init() throws IOException {
 		super.init();
+		// Get the completed queue
 		IbvCQ cq = getCqProvider().getCQ();
+
 		this.wcList = new IbvWC[getCqProvider().getCqSize()];
 		for (int i = 0; i < wcList.length; i++){
 			wcList[i] = new IbvWC();

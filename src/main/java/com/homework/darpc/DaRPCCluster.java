@@ -19,12 +19,20 @@
  *
  */
 
-package com.ibm.darpc;
+package com.homework.darpc;
 
 import java.io.IOException;
+import com.ibm.disni.verbs.*;
+import com.ibm.disni.*;
 
-public interface DaRPCService <R extends DaRPCMessage, T extends DaRPCMessage> extends DaRPCProtocol<R,T> {
-	public void processServerEvent(DaRPCServerEvent<R,T> event) throws IOException;
-	public void open(DaRPCServerEndpoint<R,T> rpcClientEndpoint);
-	public void close(DaRPCServerEndpoint<R,T> rpcClientEndpoint);
+public class DaRPCCluster<R extends DaRPCMessage, T extends DaRPCMessage> extends RdmaCqProcessor<DaRPCEndpoint<R,T>>{
+	public DaRPCCluster(IbvContext context, int cqSize, int wrSize, long affinity, int clusterId,
+			int timeout, boolean polling) throws IOException {
+		super(context, cqSize, wrSize, affinity, clusterId, timeout, polling);
+	}
+	
+	@Override
+	public void dispatchCqEvent(DaRPCEndpoint<R,T> endpoint, IbvWC wc) throws IOException {
+		endpoint.dispatchCqEvent(wc);
+	}	
 }

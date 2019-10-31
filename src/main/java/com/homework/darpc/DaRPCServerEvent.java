@@ -19,21 +19,42 @@
  *
  */
 
-package com.ibm.darpc.examples.protocol;
+package com.homework.darpc;
 
-import com.ibm.darpc.DaRPCProtocol;
+import java.io.IOException;
 
-public class RdmaRpcProtocol implements DaRPCProtocol<RdmaRpcRequest, RdmaRpcResponse> {
-	public static final int FUNCTION_FOO = 1;
-	public static final int FUNCTION_BAR = 2;	
+public class DaRPCServerEvent<R extends DaRPCMessage, T extends DaRPCMessage> {
+	private DaRPCServerEndpoint<R,T> endpoint;
+	private R request;
+	private T response;
+	private int ticket;
 	
-	@Override
-	public RdmaRpcRequest createRequest() {
-		return new RdmaRpcRequest();
+	DaRPCServerEvent(DaRPCServerEndpoint<R,T> endpoint, R request, T response){
+		this.endpoint = endpoint;
+		this.request = request;
+		this.response = response;
+		this.ticket = 0;
+	}
+	
+	public R getReceiveMessage() {
+		return request;
 	}
 
-	@Override
-	public RdmaRpcResponse createResponse() {
-		return new RdmaRpcResponse();
+	public T getSendMessage() {
+		return response;
 	}
+	
+	public void triggerResponse() throws IOException {
+		endpoint.sendResponse(this);
+	}
+	
+	public int getTicket(){
+		return ticket;
+	}
+	
+	void stamp(int ticket){
+		this.ticket = ticket;
+	}
+	
+
 }

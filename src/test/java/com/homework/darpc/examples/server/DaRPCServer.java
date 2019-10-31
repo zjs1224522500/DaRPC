@@ -19,7 +19,7 @@
  *
  */
 
-package com.ibm.darpc.examples.server;
+package com.homework.darpc.examples.server;
 
 import java.net.InetSocketAddress;
 import org.apache.commons.cli.CommandLine;
@@ -30,10 +30,10 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
-import com.ibm.darpc.DaRPCServerEndpoint;
-import com.ibm.darpc.DaRPCServerGroup;
-import com.ibm.darpc.examples.protocol.RdmaRpcRequest;
-import com.ibm.darpc.examples.protocol.RdmaRpcResponse;
+import com.homework.darpc.DaRPCServerEndpoint;
+import com.homework.darpc.DaRPCServerGroup;
+import com.homework.darpc.examples.protocol.RdmaRpcRequest;
+import com.homework.darpc.examples.protocol.RdmaRpcResponse;
 import com.ibm.disni.*;
 
 public class DaRPCServer {
